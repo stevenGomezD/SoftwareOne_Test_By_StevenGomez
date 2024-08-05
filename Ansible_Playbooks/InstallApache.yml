@@ -1,0 +1,40 @@
+---
+- name: Configurar Apache en servidores RedHat
+  hosts: redhat_server
+  become: yes
+  tasks:
+    - name: Instalar Apache
+      yum:
+        name: httpd
+        state: present
+ 
+    - name: Asegurarse de que el servicio Apache esté en funcionamiento
+      service:
+        name: httpd
+        state: started
+        enabled: yes
+ 
+    - name: Crear una página web simple
+      copy:
+        dest: /var/www/html/index.html
+        content: |
+          <html>
+            <head><title>¡Hola desde Apache!</title></head>
+            <body>
+              <h1>¡Hola, mundo!</h1>
+              <p>Este es un servidor Apache configurado por Ansible.</p>
+            </body>
+          </html>
+ 
+    - name: Reiniciar Apache para aplicar cambios
+      service:
+        name: httpd
+        state: restarted
+ 
+    - name: Comprobar que el servicio Apache esté corriendo
+      shell: systemctl is-active httpd
+      register: apache_status
+ 
+    - name: Mostrar el estado del servicio Apache
+      debug:
+        msg: "El servicio Apache está {{ apache_status.stdout }}"
