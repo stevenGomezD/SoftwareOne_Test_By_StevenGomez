@@ -1,0 +1,49 @@
+---
+- name: Instalar SQL Server y crear una instancia de base de datos
+  hosts: windows_server
+  gather_facts: yes
+  vars_files:
+    - vault_vars_sql.yml
+  tasks:
+    - name: Instalar Chocolatey (gestor de paquetes para Windows)
+      win_command: powershell.exe -NoProfile -InputFormat None -ExecutionPolicy Bypass -Command "iex ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1'))"
+      args:
+        creates: C:\ProgramData\chocolatey\bin\choco.exe
+      register: chocolatey_install
+      failed_when: chocolatey_install.rc != 0
+ 
+    - name: Mostrar estado de la instalación de Chocolatey
+      debug:
+        msg: "Chocolatey instalación: {{ chocolatey_install.stdout }}"
+ 
+    - name: Instalar SQL Server usando Chocolatey
+      win_chocolatey:
+        name: sql-server
+        state: present
+        version: 2022
+      register: sql_server_install
+ 
+    - name: Mostrar estado de la instalación de SQL Server
+      debug:
+        msg: "SQL Server instalación: {{ sql_server_install }}"
+ 
+    - name: Crear una instancia de base de datos SQL
+      win_shell: |
+        $sqlInstanceName = "MSSQLSERVER"
+        $sqlDatabaseName = "MiBaseDeDatos"
+ 
+        # Comando para crear la base de datos
+        $createDatabaseCommand = @"
+        CREATE DATABASE [$sqlDatabaseName];
+        "@
+        
+        # Ejecutar el comando SQL
+        Invoke-Sqlcmd -ServerInstance ".\$sqlInstanceName" -Username "{{ sql_server_admin_user }}" -Password "{{ sql_server_admin_password }}" -Query $createDatabaseCommand
+      args:
+        executable: powershell.exe
+      register: database_creation
+      failed_when: database_creation.rc != 0
+ 
+    - name: Mostrar estado de la creación de la base de datos
+      debug:
+        msg: "Creación de base de datos SQL: {{ database_creation.stdout }}"
