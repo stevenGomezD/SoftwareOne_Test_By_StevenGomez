@@ -7,7 +7,7 @@ import argparse
 #Recibe como parametreo el ID del personaje
 def get_dragonball_data(id: str):
     #Procesar el parametro
-    id_param = str(id).split(":")[1][1:2]
+    id_param = str(id).split(":")[1].replace(" ","").replace("})","")
     url = f"https://dragonball-api.com/api/characters/{id_param}"
     
     #Request GET
@@ -95,7 +95,7 @@ def main():
     save_json_to_file(data)
     
     # Paso 3: Generar el archivo HTML a partir del JSON
-    generate_html_from_json("dragonball_data.json")
+    generate_html_from_json("Python_Scripts/dragonball_data.json")
 
  
 if __name__ == "__main__":
