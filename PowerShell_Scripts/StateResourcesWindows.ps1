@@ -70,7 +70,7 @@ $html += @"
 "@
  
 # Guarda el archivo HTML
-$outputFile = ".\WindowsStateResources.html"
+$outputFile = ".\PowerShell_Scripts\WindowsStateResources.html"
 $html | Out-File -FilePath $outputFile -Encoding utf8
  
 Write-Output "El informe del estado del sistema ha sido guardado en $outputFile"
