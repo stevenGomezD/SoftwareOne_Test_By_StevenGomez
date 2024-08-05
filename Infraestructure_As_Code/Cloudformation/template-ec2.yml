@@ -1,0 +1,134 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: CloudFormation Template to deploy EC2 instances
+
+#Parametros de la plantilla 
+Parameters:
+  InstanceType:
+    Description: EC2 instance type
+    Type: String
+ 
+  KeyName:
+    Description: Name of an existing EC2 KeyPair to enable SSH access to the instance
+    Type: String
+ 
+  WindowsInstanceAMI:
+    Description: AMI ID for the Windows Server instance
+    Type: String
+
+  RedHatInstanceAMI:
+    Description: AMI ID for the RedHat Server instance
+    Type: String
+
+  EC2InstanceRoleName:
+    Description: ARN of EC2 Instance IAM Role
+    Type: String
+  
+  VpcId:
+    Description: VPC ID where the instance will be deployed
+    Type: String
+ 
+  SubnetId:
+    Description: Subnet ID where the instance will be deployed
+    Type: String
+
+#Recursos de la plantilla 
+Resources:
+
+  #Instancia Windows 
+  WindowsEC2Instance:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: !Ref InstanceType
+      KeyName: !Ref KeyName
+      ImageId: !Ref InstanceAMI
+      SubnetId: !Ref SubnetId
+      DisableApiTermination: true
+      SecurityGroupIds:
+        - !Ref InstanceSecurityGroup
+      UserData:
+        Fn::Base64: !Sub |
+          <powershell>
+          # 
+          </powershell>
+  
+  #Instancia RedHat 1
+  RedHatEC2Instance1:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: !Ref InstanceType
+      ImageId: !Ref RedHatInstanceAMI
+      SubnetId: !Ref SubnetId
+      DisableApiTermination: true
+      SecurityGroupIds:
+        - !Ref LinuxInstanceSecurityGroup
+      IamInstanceProfile: !Join ["", ["{{resolve:ssm:", !Ref EC2InstanceRoleName, "}}"]]
+      UserData:
+        Fn::Base64: !Sub
+          - |
+            #!/bin/bash
+
+  #Instancia RedHat 2
+  RedHatEC2Instance2:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: !Ref InstanceType
+      ImageId: !Ref RedHatInstanceAMI
+      SubnetId: !Ref SubnetId
+      DisableApiTermination: true
+      SecurityGroupIds:
+        - !Ref LinuxInstanceSecurityGroup
+      IamInstanceProfile: !Join ["", ["{{resolve:ssm:", !Ref EC2InstanceRoleName, "}}"]]
+      UserData:
+        Fn::Base64: !Sub
+          - |
+            #!/bin/bash
+
+  #Security Group Windows
+  WindowsInstanceSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Segurity Group of Windows Instance
+      VpcId: !Ref VpcId
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 3389
+          ToPort: 3389
+          CidrIp: 0.0.0.0/0
+
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: "0.0.0.0/0"
+
+        - IpProtocol: tcp
+          FromPort: 1433
+          ToPort: 1433
+          CidrIp: "0.0.0.0/0"
+
+  #Security Group Linux
+  LinuxInstanceSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Segurity Group of Linux Instance
+      VpcId: !Ref VpcId
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 0.0.0.0/0
+
+        - IpProtocol: udp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 0.0.0.0/0
+
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: "0.0.0.0/0"
+
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: "0.0.0.0/0"
+ 
